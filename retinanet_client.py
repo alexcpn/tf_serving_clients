@@ -1,5 +1,6 @@
 """ GRPC Client for Retinanet TF Serving Model"""
-__author__ = Alex Punnem
+__author__ = "Alex Punnen"
+__date__  = "March 2019"
 
 import grpc
 import numpy
@@ -171,8 +172,8 @@ def main(_):
     print('please specify server -server host:port')
     return
   print("Number of test=",FLAGS.num_tests)
-  error_rate = do_inference(FLAGS.server, FLAGS.work_dir,
-                            FLAGS.concurrency, FLAGS.num_tests) 
+  error_rate = do_inference(FLAGS.server, FLAGS.batch_size,
+                             FLAGS.num_tests) 
           
 if __name__ == '__main__':
     print ("Retinanet TFServing Client  < -num_tests=1 -server=127.0.0.1:8500 -batch_size=2>")
