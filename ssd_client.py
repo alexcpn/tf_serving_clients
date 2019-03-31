@@ -174,11 +174,11 @@ def do_inference(server, batch_size, num_tests,img_path):
     channel = grpc.insecure_channel(server)            
     stub = prediction_service_pb2_grpc.PredictionServiceStub(channel)      
     request = predict_pb2.PredictRequest()                      
-    request.model_spec.name = 'ssd_inception_v2_coco'                        
+    request.model_spec.name = 'default'                        
     request.model_spec.signature_name = 'serving_default'
     print("Image path",img_path)
     #post process the image
-    image,org= decode_image_opencv(img_path,max_height=800)
+    image,org= decode_image_opencv(img_path,max_height=800,swapRB=False)
     #image,org = decode_image_tf_reader(img_path,max_height=800)
     image = image.astype(np.uint8)
     global _draw

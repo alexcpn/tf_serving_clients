@@ -8,7 +8,7 @@ from timeit import default_timer as timer
 import numpy as np 
 import cv2
 
-def decode_image_opencv(img_path,max_height=800):
+def decode_image_opencv(img_path,max_height=800,swapRB=True):
   ### Going to create image vector via OpenCV
   #todo https://docs.nvidia.com/deeplearning/sdk/dali-developer-guide/docs/examples/getting%20started.html
   start = timer()
@@ -19,7 +19,7 @@ def decode_image_opencv(img_path,max_height=800):
   image = image_resize(image,height=max_height)
   org  = image
   #VGG_MEAN = [103.939, 116.779, 123.68]
-  image = cv2.dnn.blobFromImage(image, scalefactor=1.0,mean=(103.939, 116.779, 123.68), swapRB=True)
+  image = cv2.dnn.blobFromImage(image, scalefactor=1.0,mean=(103.939, 116.779, 123.68), swapRB=swapRB)
   # this gives   shape as  (1, 3, 480, 640))
   image = np.transpose(image, (0, 2, 3, 1))
   # we get it after transpose as ('Input shape=', (1, 480, 640, 3))
