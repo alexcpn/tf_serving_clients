@@ -178,7 +178,10 @@ def do_inference(server, batch_size, num_tests,img_path):
     request.model_spec.signature_name = 'serving_default'
     print("Image path",img_path)
     #post process the image
-    image,org= decode_image_opencv(img_path,max_height=800,swapRB=False)
+    IMAGENET_MEAN = (103.939, 116.779, 123.68)
+    IMAGENET_MEAN = (0,0,0)
+    image,org= decode_image_opencv(img_path,max_height=800,swapRB=True,
+        imagenet_mean=IMAGENET_MEAN)
     #image,org = decode_image_tf_reader(img_path,max_height=800)
     image = image.astype(np.uint8)
     global _draw
