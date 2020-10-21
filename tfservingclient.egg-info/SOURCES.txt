@@ -1,0 +1,16 @@
+MANIFEST.in
+README.md
+setup.py
+cnn_client/__init__.py
+cnn_client/image_preprocessor.py
+cnn_client/tf_client.py
+cnn_client/cnncli_generated/__init__.py
+cnn_client/cnncli_generated/string_int_label_map_pb2.py
+cnn_client/cnncli_generated/string_int_label_map_pb2_grpc.py
+cnn_client/resources/mscoco_complete_label_map.pbtxt
+cnn_client/resources/retinanet_complete_label_map.pbtxt
+cnn_client/resources/retinanet_label_map.py
+tfservingclient.egg-info/PKG-INFO
+tfservingclient.egg-info/SOURCES.txt
+tfservingclient.egg-info/dependency_links.txt
+tfservingclient.egg-info/top_level.txt
