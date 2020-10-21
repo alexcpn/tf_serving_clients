@@ -1,30 +1,33 @@
 This is a Generic GRPC Clients for Tensor Flow Serving compatible open source models like Resnet 50 , Retinanet, SSD etc
 
+Full documentation - [Generic TensorFlow Client](https://medium.com/data-science-engineering/productising-tensorflow-keras-models-via-tensorflow-serving-69e191cb1f37)
 
-# Server
+## Server
 
 
-## With GPU
+**With GPU**
 
 ```console
 docker run  --net=host --runtime=nvidia  -it --rm -p 8900:8500 -p 8901:8501 -v /home/alex/coding/Prototypes/models:/models  tensorflow/serving:latest-gpu --rest_api_port=0  --enable_batching=true   --model_config_file=/models/model_configs/ssd_mobilenet_v1_0.75.json
 ```
 
-## With CPU
+Note - Please see this post regarding preparing your environment for GPU https://medium.com/data-science-engineering/install-the-right-nvidia-driver-for-cuda-in-ubuntu-2d9ade437dec
+
+**With CPU**
 
 ```console
 docker run  --net=host -it --rm -p 8900:8500 -p 8901:8501 -v /home/alex/coding/Prototypes/models:/models  tensorflow/serving:latest --rest_api_port=0  --enable_batching=true   --model_config_file=/models/model_configs/ssd_mobilenet_v1_0.75.json
 ```
 
-# Client
+## Client
 
-## With GPU
+**With GPU**
 
 ```console
 docker run --entrypoint=/bin/bash   --runtime=nvidia  -it --rm  -v /home/alex/:/alex --net=host tensorflow/tensorflow:2.3.1-gpu-jupyter
 ```
 
-## With CPU
+**With CPU**
 
 ```console
 docker run --entrypoint=/bin/bash -it --rm  -v /home/alex/:/alex --net=host tensorflow/tensorflow:2.3.1-jupyter

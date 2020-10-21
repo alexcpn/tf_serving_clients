@@ -1,0 +1,13 @@
+model_config_list {
+ config {
+    name: "default",
+    base_path: "/models/models/ssd_resnet50_v1_fpn_shared_box_predictor_640x640_coco14_sync_2018_07_03/",
+	  model_version_policy: {
+        specific: { 
+       		 versions:[01]
+      } 
+    },
+    model_platform:"tensorflow",
+  }
+}
+

@@ -1,0 +1,10 @@
+model_config_list {
+ config {
+    name: "resnet_16",
+    base_path: "/models/resnet_v2_fp32_savedmodel_NCHW/",
+	model_version_policy: {
+        all: {}
+    },
+    model_platform:"tensorflow",
+  }
+}

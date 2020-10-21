@@ -1,0 +1,16 @@
+model_config_list {
+  config {
+    name: "resnet_32",
+    base_path: "/coding/resnet_v2_fp32_savedmodel_NCHW/1538687196",
+	model_version_policy: {
+        all: {}
+    }
+  }
+  config {
+    name: "resnet_16",
+    base_path: "/coding/resnet_v2_fp32_savedmodel_NCHW/1538687196",
+	model_version_policy: {
+        all: {}
+    }
+  }
+}
