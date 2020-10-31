@@ -57,8 +57,8 @@ if __name__ == "__main__":
         # scores are sorted so we can break
         if score < detection_threshold:
             break
-        # only if SSD we need to convert box to normal
-        if (model_name == 'ssd'):
+        # For certain models we need to convert box to normal
+        if ( (model_name == 'maskrcnn') or (model_name == 'ssd') ):
             box = detectObject.box_normal_to_pixel(box, image.shape)
         b = box.astype(int)
         class_label = detectObject.get_label(int(label))

@@ -1,9 +1,10 @@
-""" GRPC Client for TF Serving Model"""
+""" Generic GRPC Client for TF Serving Model"""
+
+from __future__ import division
 
 __author__ = "Alex Punnen"
 __date__ = "March 2019"
 
-from __future__ import division
 
 from google.protobuf import text_format
 import cnn_client.cnncli_generated.string_int_label_map_pb2 as labelmap
@@ -31,64 +32,80 @@ PATH_TO_LABELS = os.path.join('.', 'mscoco_label_map.pbtxt')
 # lets load the labels to the protobuf
 templates_dir = os.path.join(os.path.dirname(__file__), 'resources')
 
+
 class DetectObject:
 
-    def __init__(self, server,model_name):
+    def __init__(self, server, model_name):
         self.server = server
         self._response_awaiting = True
-        file_path = os.path.join(templates_dir, \
-            'mscoco_complete_label_map.pbtxt')
+        file_path = os.path.join(templates_dir,
+                                 'mscoco_complete_label_map.pbtxt')
         s = open(file_path, 'r').read()
         mymap = labelmap.StringIntLabelMap()
         _label_map_ssd = text_format.Parse(s, mymap)
 
-        file_path = os.path.join(templates_dir, \
-            'retinanet_complete_label_map.pbtxt')
+        file_path = os.path.join(templates_dir,
+                                 'retinanet_complete_label_map.pbtxt')
         s = open(file_path, 'r').read()
         mymap = labelmap.StringIntLabelMap()
         _label_map_retinanet = text_format.Parse(s, mymap)
+        # https://github.com/tensorflow/serving/issues/1382#issuecomment-503375968
+        options = [('grpc.max_receive_message_length',217829259)]
+        self.channel = grpc.insecure_channel(self.server, options = options)
+        self.stub = prediction_service_pb2_grpc.PredictionServiceStub(
+            self.channel)
 
-
-        self.channel = grpc.insecure_channel(self.server)
-        self.stub = prediction_service_pb2_grpc.PredictionServiceStub(self.channel)
-        
         self.Q = queue.Queue()
-        ssd_model_params = {
-            "model": "SSD",
-            "model_name": "ssd_inception_v2_coco",
-            "signature": "serving_default",
-            "input": "inputs",
-            "boxes": "detection_boxes",
-            "scores": "detection_scores",
-            "classes": "detection_classes",
-            "num_detections": "num_detections",
-            "IMAGENET_MEAN": (0, 0, 0),
-            "swapRB": True,
-            "label_map": _label_map_ssd
+
+        model_map = {
+            "ssd": {
+                "model": "SSD",
+                "model_name": "ssd_inception_v1_coco",
+                "signature": "serving_default",
+                "input": "inputs",
+                "input_dtype" : "DT_FLOAT",
+                "boxes": "detection_boxes",
+                "scores": "detection_scores",
+                "classes": "detection_classes",
+                "num_detections": "num_detections",
+                "IMAGENET_MEAN": (0, 0, 0),
+                "swapRB": True,
+                "label_map": _label_map_ssd
+            },
+
+            "retinanet": {
+                "model": "RETINANET",
+                "model_name": "retinanet",
+                "signature": "serving_default",
+                "input": "input_image",
+                "input_dtype" : "DT_FLOAT",
+                "boxes": "filtered_detections/map/TensorArrayStack/TensorArrayGatherV3:0",
+                "scores": "filtered_detections/map/TensorArrayStack_1/TensorArrayGatherV3:0",
+                "classes": "filtered_detections/map/TensorArrayStack_2/TensorArrayGatherV3:0",
+                # "IMAGENET_MEAN": (103.939, 116.779, 123.68),
+                "IMAGENET_MEAN": (0, 0, 0),
+                "swapRB": True,
+                "label_map": _label_map_retinanet
+            },
+
+            "maskrcnn": {
+                "model": "mask_rcnn_inception",
+                "model_name": "mask_rcnn_inception_resnet_v2",
+                "signature": "serving_default",
+                "input": "input_tensor",
+                "input_dtype" : "DT_UINT8",
+                "boxes": "detection_boxes",
+                "scores": "detection_scores",
+                "classes": "detection_classes",
+                "num_detections": "num_detections",
+                "IMAGENET_MEAN": (0, 0, 0),
+                "swapRB": True,
+                "label_map": _label_map_ssd
+            }
         }
 
-        retinanet_model_params = {
-            "model": "RETINANET",
-            "model_name": "retinanet",
-            "signature": "serving_default",
-            "input": "input_image",
-            "boxes": "filtered_detections/map/TensorArrayStack/TensorArrayGatherV3:0",
-            "scores": "filtered_detections/map/TensorArrayStack_1/TensorArrayGatherV3:0",
-            "classes": "filtered_detections/map/TensorArrayStack_2/TensorArrayGatherV3:0",
-            #"IMAGENET_MEAN": (103.939, 116.779, 123.68),
-            "IMAGENET_MEAN": (0, 0, 0),
-            "swapRB": True,
-            "label_map": _label_map_retinanet
-        }
-
-        self.model_params = ssd_model_params
         self.model_name = model_name.lower()
-        
-        if(self.model_name == "ssd"):
-          self.model_params = ssd_model_params
-        elif(self.model_name == "retinanet"):
-          self.model_params = retinanet_model_params
-        
+        self.model_params= model_map[self.model_name]
 
     def get_label(self, index):
         return self.model_params["label_map"].item[index].display_name
@@ -129,7 +146,7 @@ class DetectObject:
             num_detections = tf.make_ndarray(num_detections)
         else:
             num_detections = None
-        
+
         boxes = tf.make_ndarray(boxes)
         scores = tf.make_ndarray(scores)
         labels = tf.make_ndarray(labels)
@@ -138,8 +155,8 @@ class DetectObject:
         # print("boxes output",(boxes).shape)
         #print("scores output",(scores).shape)
         #print("labels output",(labels).shape)
-        #print('num_detections',num_detections[0])
-        # this 
+        # print('num_detections',num_detections[0])
+        # this
         # 'boxes output',  #(1, 100, 4))
         #('scores output', (1, 100))
         #('labels output', (1, 100))
@@ -155,28 +172,26 @@ class DetectObject:
 
     def output_results(self, image, box, score, class_label):
         b = box
-        cv2.putText(image, class_label + " " +str(round(score, 2)), (b[0]+2, b[1]+8),
+        cv2.putText(image, class_label + " " + str(round(score, 2)), (b[0]+2, b[1]+8),
                     cv2.FONT_HERSHEY_SIMPLEX, .45, (0, 0, 255))
         cv2.rectangle(image, (b[0], b[1]), (b[2], b[3]), (0, 100, 255), 1)
-        cv2.putText(image,class_label + " " +str(round(score,2)), (b[0]+2,b[1]+8),\
-           cv2.FONT_HERSHEY_SIMPLEX, .45, (0,0,255))
+        cv2.putText(image, class_label + " " + str(round(score, 2)), (b[0]+2, b[1]+8),
+                    cv2.FONT_HERSHEY_SIMPLEX, .45, (0, 0, 255))
         return image
-
 
     def do_inference(self, image, height=800, batch_size=1):
 
         request = predict_pb2.PredictRequest()
         request.model_spec.name = self.model_params["model_name"]
         request.model_spec.signature_name = self.model_params["signature"]
-        
+
         # post process the image
         IMAGENET_MEAN = self.model_params["IMAGENET_MEAN"]
         swapRB = self.model_params["swapRB"]
         image, org = decode_image_opencv(image, max_height=height, swapRB=swapRB,
                                          imagenet_mean=IMAGENET_MEAN)
-        if self.model_params["model"] == "SSD":
-          image = image.astype(np.uint8)
-        #retinanet needs as float
+        if self.model_params["input_dtype"] == "DT_UINT8":
+            image = image.astype(np.uint8)
         self._draw = org.copy()
         #print ("in image shape",image.shape)
 
@@ -187,28 +202,28 @@ class DetectObject:
         # If using anything other than decode_opencv uncomment line below
         #input = np.expand_dims(image, axis=0)
         #('Input shape=', (1, 480, 640, 3))
-        input = image  # comment this if using anything other than retinanet
+        #input = image  # comment this if using anything other than retinanet
         #print("Input shape=",input.shape )
-        inputs = input
+        inputs = image
         for _ in range(batch_size-1):
-            inputs = np.append(inputs, input, axis=0)
+            inputs = np.append(inputs, image, axis=0)
 
-        #print("Input-s shape",inputs.shape)
-        # note - original is inputs, for V100 I saved modesl with 'input_image'
+        print("Input-s shape",inputs.shape)
+       
         # Pre TF 2.0
-        #request.inputs[self.model_params["input"]].CopyFrom(tf.contrib.util.make_tensor_proto
+        # request.inputs[self.model_params["input"]].CopyFrom(tf.contrib.util.make_tensor_proto
         #                                  (inputs, shape=inputs.shape))
 
         request.inputs[self.model_params["input"]].CopyFrom(tf.make_tensor_proto
-                                          (inputs, shape=inputs.shape))
+                                                            (inputs, shape=inputs.shape))
 
         # call back way - this is faster
-        # result_future = stub.Predict.future(request, 60.25)  # Intial takes time
-        # result_future.add_done_callback(self._callback)
-        # self._response_awaiting = True
+        #result_future = self.stub.Predict.future(request, 60.25)  # Intial takes time
+        #result_future.add_done_callback(self._callback)
+        #self._response_awaiting = True
 
         # request reponse way - this is slower
-        result = self.stub.Predict(request, 10.25)  # seconds
+        result = self.stub.Predict(request, 30.25)  # seconds
         boxes, scores, labels, num_detections = self.parse_result(result)
         #print("No of detections=",num_detections)
         return boxes, scores, labels, num_detections

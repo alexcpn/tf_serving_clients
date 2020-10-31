@@ -1,6 +1,6 @@
 model_config_list {
  config {
-    name: "ssd_inception_v2_coco",
+    name: "ssd_inception_v1_coco",
     base_path: "/models/ssd/ssd_mobilenet_v1_0.75_depth_300x300_coco14_sync_2018_07_03/",
 	  model_version_policy: {
         all: {}
