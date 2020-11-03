@@ -1,0 +1,4 @@
+*.pb filter=lfs diff=lfs merge=lfs -text
+variables.* filter=lfs diff=lfs merge=lfs -text
+variables.data.* filter=lfs diff=lfs merge=lfs -text
+models/mask_rcnn/mask_rcnn_inception_resnet_v2_1024x1024_coco17_gpu-8/2/variables/variables.data-00000-of-00001 filter=lfs diff=lfs merge=lfs -text
